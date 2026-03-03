@@ -1,0 +1,9 @@
+[project]
+name = "nextmind-langgraph"
+version = "0.1.0"
+description = "This is an AI Agent API that can identify gaps in research and generate novel hypothesis"
+readme = "README.md"
+requires-python = ">=3.12.7"
+dependencies = [
+    "aiosqlite>=0.22.1",
+]
