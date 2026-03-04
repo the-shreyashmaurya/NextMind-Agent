@@ -98,9 +98,17 @@ class SynthesisAgent(BaseAgent):
     def __init__(self):
         super().__init__(settings.CRITICAL_MODEL)
 
-    async def generate_hypothesis(self, gap: Dict[str, Any]):
-        prompt = f"""Generate hypothesis for selected research gap: {gap.get('title')}
-        Description: {gap.get('description')}
+    async def generate_hypothesis(self, gap: Dict[str, Any], summaries: List[str] = []):
+        summaries_text = "\n".join(summaries[:5])
+        prompt = f"""Generate a research hypothesis for the following research gap, taking into account the existing research summarized below.
+        
+        Selected Research Gap: {gap.get('title')}
+        Gap Description: {gap.get('description')}
+        
+        Existing Research Summaries:
+        {summaries_text}
+        
+        The hypothesis must be novel and address why the existing research (summarized above) is insufficient.
         
         Format:
         If X then Y because Z.
@@ -127,11 +135,18 @@ class SynthesisAgent(BaseAgent):
         """
         return await self.ask(prompt)
 
-    async def judge_novelty(self, hypothesis: Dict[str, Any]):
-        prompt = f"""Evaluate novelty for the following research hypothesis:
-        {hypothesis.get('hypothesis_statement')}
+    async def judge_novelty(self, hypothesis: Dict[str, Any], summaries: List[str] = []):
+        summaries_text = "\n".join(summaries[:5])
+        prompt = f"""Evaluate the novelty of the following research hypothesis against the provided research summaries.
         
-        Based on existing knowledge, provide a novelty score (0-1).
+        Hypothesis: {hypothesis.get('hypothesis_statement')}
+        
+        Existing Research Summaries:
+        {summaries_text}
+        
+        Compare the hypothesis to the summaries. If the hypothesis proposes a specific mechanism, population, or application not explicitly covered in the summaries, it should receive a higher novelty score.
+        
+        Provide a novelty score (0 to 1). Be encouraging for valid new directions.
         
         Return JSON:
         {{

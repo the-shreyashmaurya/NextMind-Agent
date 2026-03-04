@@ -87,7 +87,11 @@ def create_research_workflow():
     workflow.add_conditional_edges("LogicalValidatorNode", check_logical_validity)
     
     def check_novelty(state: ResearchState) -> Literal["ResearchReadyNode", "GapDetectorNode"]:
-        if state.get("novelty_score", 0.0) >= 0.1:
+        novelty_score = state.get("novelty_score", 0.0)
+        retries = state.get("retry_counts", {}).get("novelty_check", 0)
+        
+        # Proceed if novelty is good OR we've tried a few times (MVP safeguard)
+        if novelty_score >= 0.1 or retries >= 2:
             return "ResearchReadyNode"
         return "GapDetectorNode"
         

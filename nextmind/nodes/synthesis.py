@@ -24,7 +24,10 @@ class SynthesisNodes:
         updates.update(emit_progress(state, "HypothesisGeneratorNode", "hypothesis_generation", 80, "Generating research hypothesis..."))
         
         try:
-            hypothesis = await synthesis_agent.generate_hypothesis(state.get("selected_gap", {}))
+            hypothesis = await synthesis_agent.generate_hypothesis(
+                state.get("selected_gap", {}),
+                state.get("summaries", [])
+            )
             updates["hypothesis"] = hypothesis
         except Exception as e:
             updates["errors"] = [f"HypothesisGenerator error: {str(e)}"]
@@ -60,13 +63,21 @@ class SynthesisNodes:
         updates.update(emit_progress(state, "NovelJudgeNode", "novelty_verification", 95, "Verifying novelty..."))
         
         try:
-            novelty_data = await synthesis_agent.judge_novelty(state.get("hypothesis", {}))
+            novelty_data = await synthesis_agent.judge_novelty(
+                state.get("hypothesis", {}), 
+                state.get("summaries", [])
+            )
             updates["novelty_score"] = novelty_data.get("novelty_score", 0.0)
             updates["result"] = {
                 "gap": state.get("selected_gap", {}),
                 "hypothesis": state.get("hypothesis", {}),
                 "novelty": novelty_data
             }
+            # Increment retry count for novelty check
+            retry_counts = state.get("retry_counts", {}).copy()
+            retry_counts["novelty_check"] = retry_counts.get("novelty_check", 0) + 1
+            updates["retry_counts"] = retry_counts
+            
         except Exception as e:
             updates["errors"] = [f"NovelJudge error: {str(e)}"]
             
